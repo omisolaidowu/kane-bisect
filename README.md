@@ -1,8 +1,8 @@
 # kane-bisect — Book Search Demo App
 
 **kane-bisect** watches your repo, catches regressions with real browser
-tests, finds the exact commit that caused them, and fixes them —
-automatically. No commit hashes to remember, no manual bisecting.
+tests, finds the exact commit that caused them, and fixes them
+automatically.
 
 This folder contains a small Flask demo app (one feature: search a list
 of books) used as the test subject, plus `kane_bissect.py`, the tool
