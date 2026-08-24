@@ -1,8 +1,8 @@
 # kane-bisect — Book Search Demo App
 
 **kane-bisect** watches your repo, catches regressions with real browser
-tests, finds the exact commit that caused them, and fixes them
-automatically.
+tests, finds the exact commit that caused them, and fixes them —
+automatically. No commit hashes to remember, no manual bisecting.
 
 This folder contains a small Flask demo app (one feature: search a list
 of books) used as the test subject, plus `kane_bissect.py`, the tool
@@ -121,3 +121,35 @@ producing no real result at all). `kane_bissect.py` handles this by:
 This is a deliberate design choice, not a workaround being hidden: a
 single flaky check is a poor foundation for an automated pipeline, so
 the tool treats agreement across runs as the real signal of truth.
+
+## 6. Limitations and future work
+
+**Scoped to one app, by design, for this demo.** `KANE_OBJECTIVE`, the
+Flask start command, and the target file (`app.py`) are hardcoded to
+this project. Generalizing this — auto-detecting the start command
+from `package.json` / `requirements.txt` / etc., and taking the test
+objective as a config file or CLI flag — is the natural next step to
+make this work on any repo, not just this one.
+
+**Tests locally, not against a live deployment.** When bisecting, the
+tool checks out each historical commit and spins up a local server to
+test it — it does not re-deploy each commit to a real staging/prod
+environment. So the realistic workflow is: a regression shows up in
+production → you reproduce it locally at your current `HEAD` → `check`
+bisects through local history to find the commit that caused it. True
+"bisect against prod" would require a way to deploy or preview each
+historical commit, which is a meaningfully larger project.
+
+**Assumes a bug stays broken once introduced**, the same assumption
+regular `git bisect` makes. If a bug is introduced in one commit, then
+incidentally masked (without being genuinely fixed) by a later commit,
+and re-appears afterward, the binary search's halving logic can point
+to the wrong commit. Worth being aware of on any repo with a more
+tangled commit history than this demo's straight line.
+
+**The auto-fix step trusts a single AI-generated patch.** It re-tests
+with Kane before committing, so a fix that doesn't work is caught and
+never silently accepted — but it doesn't try multiple candidate fixes
+or ask for human review before committing a passing one. For a
+higher-stakes codebase, a "propose but don't auto-commit" mode, or a
+required human approval step, would be a safer default.
