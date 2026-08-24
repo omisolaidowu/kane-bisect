@@ -2,7 +2,7 @@
 
 **kane-bisect** watches your repo, catches regressions with real browser
 tests, finds the exact commit that caused them, and fixes them
-automatically. You never need to remember or type a commit hash.
+automatically without needing to remember or type a commit hash.
 
 This folder contains a small Flask demo app (one feature: search a list
 of books) used as the test subject, plus `kane_bissect.py`, the tool
