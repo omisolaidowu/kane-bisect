@@ -2,6 +2,17 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
+# helper comment
+# another note
+# one more tweak
+
+
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    return response
+
+
 BOOKS = [
     "The Pragmatic Programmer",
     "Clean Code",
@@ -18,7 +29,6 @@ def index():
     if query:
         # This line matches a book if the search text appears anywhere
         # inside its title, ignoring uppercase/lowercase differences.
-        # results = [book for book in BOOKS if query.lower() in book.lower()]
         results = [book for book in BOOKS if query == book]
     return render_template("index.html", query=query, results=results)
 
