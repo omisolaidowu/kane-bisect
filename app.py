@@ -6,6 +6,7 @@ app = Flask(__name__)
 # another demo filter
 
 # filter update
+# helper filter
 
 
 @app.after_request
