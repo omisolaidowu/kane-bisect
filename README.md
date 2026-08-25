@@ -1,4 +1,4 @@
-[kane-bisect-thumbnail](images/thumbnails/kane-bisect-thumbnail.png)
+![kane-bisect-thumbnail](images/thumbnails/kane-bisect-thumbnail.png)
 
 # kane-bisect - Book Search Demo App
 
