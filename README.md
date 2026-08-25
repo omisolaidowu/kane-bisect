@@ -142,7 +142,7 @@ real result at all). `kane_bissect.py` handles this in a few ways:
   delay is enough. A stale leftover server was an early, hard-to-spot
   source of false results during development.
 
-This is a deliberate design choice rather than a workaround being hidden. A
+This is a deliberate design choice, not a workaround being hidden. A
 single flaky check is a poor foundation for an automated pipeline, so
 the tool treats agreement across runs as the real signal of truth.
 
@@ -179,3 +179,17 @@ it does not ask for human review before committing a passing one. For
 a higher-stakes codebase, a mode that proposes a fix without
 auto-committing it, or a required human approval step, would be a
 safer default.
+
+## 7. Evidence
+
+Screenshots of a real run, from `screenshots/`:
+
+![Bug detected and bisected](screenshots/01-bisect-found-commit.png)
+![Fix proposed and applied](screenshots/02-fix-applied.png)
+![Kane confirms the fix passes](screenshots/03-kane-passed.png)
+
+Kane's own recorded test run for the fixed commit, viewable directly on
+the TestMu test manager: [test confirmation](https://test-manager.lambdatest.com/projects/01M0T534WGYTDJ7HEV2CRW3H5X/test-cases/01M0X3DY0SESCG35NJE1YSS7KJ/dashboard/share/US_YE7VVE399LEC1NSG8LE5LMKH72EPWFXF6Q272OJ1Q70EIQ3E136O08IM5AWEQ5KI?type=summary&agentView=true&fqdn=summary-page)
+
+This is Kane's own evidence, not a screenshot of terminal text, so it
+can be verified independently of anything in this repo.
