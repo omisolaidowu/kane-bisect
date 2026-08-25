@@ -29,7 +29,7 @@ def index():
     if query:
         # This line matches a book if the search text appears anywhere
         # inside its title, ignoring uppercase/lowercase differences.
-        results = [book for book in BOOKS if query == book]
+        results = [book for book in BOOKS if query.lower() in book.lower()]
     return render_template("index.html", query=query, results=results)
 
 
