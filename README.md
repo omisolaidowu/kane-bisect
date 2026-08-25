@@ -163,14 +163,14 @@ the tool treats agreement across runs as the real signal of truth.
 
 ## 6. Limitations and future work
 
-**Scoped to one app, by design, for this demo.** `KANE_OBJECTIVE`, the
+- **Scoped to one app, by design, for this demo.** `KANE_OBJECTIVE`, the
 Flask start command, and the target file (`app.py`) are hardcoded to
 this project. Generalizing this, by auto-detecting the start command
 from `package.json` or `requirements.txt`, and taking the test
 objective as a config file or CLI flag, is the natural next step to
 make this work on any repo, not just this one.
- 
-**Tests locally, not against a live deployment.** When bisecting, the
+
+- **Tests locally, not against a live deployment.** When bisecting, the
 tool checks out each historical commit and spins up a local server to
 test it. It does not re-deploy each commit to a real staging or
 production environment. So the realistic workflow is: a regression
@@ -180,14 +180,14 @@ that caused it. True bisecting against production would require a way
 to deploy or preview each historical commit, which is a meaningfully
 larger project.
  
-**Assumes a bug stays broken once introduced,** the same assumption
+- **Assumes a bug stays broken once introduced,** the same assumption
 regular `git bisect` makes. If a bug is introduced in one commit, then
 incidentally masked (without being genuinely fixed) by a later commit,
 and reappears afterward, the binary search's halving logic can point
 to the wrong commit. Worth being aware of on any repo with a more
 tangled commit history than this demo's straight line.
  
-**The auto-fix step trusts a single AI-generated patch.** It re-tests
+- **The auto-fix step trusts a single AI-generated patch.** It re-tests
 with Kane before committing, so a fix that doesn't work is caught and
 never silently accepted. It does not try multiple candidate fixes, and
 it does not ask for human review before committing a passing one. For
@@ -195,7 +195,7 @@ a higher-stakes codebase, a mode that proposes a fix without
 auto-committing it, or a required human approval step, would be a
 safer default.
  
-**Reliability costs speed.** Every genuine PASSED result gets a second
+- **Reliability costs speed.** Every genuine PASSED result gets a second
 confirmation run before being trusted, and automation stalls or invalid
 runs are discarded and retried rather than counted as evidence. This
 roughly doubles (sometimes triples) the number of Kane calls per commit
