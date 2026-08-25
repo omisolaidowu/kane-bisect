@@ -23,7 +23,7 @@ import urllib.request
 APP_URL = "http://localhost:5000"
 
 # Where we remember the last commit confirmed to be good. This file lives
-# in the repo folder but is git-ignored — it's the tool's own memory, not
+# in the repo folder but is git-ignored. It's the tool's own memory, not
 # part of the project history.
 STATE_FILE = ".kane_bisect_state.txt"
 
@@ -34,7 +34,7 @@ current_process = None
 # The one thing this app is supposed to do correctly.
 # Phrased to lean on Kane's stronger "presence" check rather than an
 # implicit absence check, and to explicitly wait for the page to finish
-# reloading before asserting — both are documented sources of false
+# reloading before asserting. Both are documented sources of false
 # results in Kane CLI's current release.
 KANE_OBJECTIVE = (
     "Type 'Clean' into the search box, click Search, "
@@ -155,7 +155,7 @@ def stop_app():
 
     current_process = None
 
-    # Don't just assume the port is free after a fixed delay — confirm it.
+    # Don't just assume the port is free after a fixed delay. Confirm it.
     if not wait_until_port_free():
         print(
             "  WARNING: port 5000 is still occupied after stopping the "
@@ -195,8 +195,8 @@ def is_automation_stall(output):
 
 def has_valid_run(output):
     """
-    Check whether Kane actually completed a real test run — i.e. the
-    output contains a proper run_end result — as opposed to failing to
+    Check whether Kane actually completed a real test run, meaning the
+    output contains a proper run_end result, as opposed to failing to
     execute at all (auth errors, missing config, etc.), which produces
     no structured result and should never be trusted as a real verdict.
     """
@@ -205,58 +205,74 @@ def has_valid_run(output):
 
 def run_kane_flow_reliable(max_attempts=3):
     """
-    Run the Kane flow and guard against every failure mode we've
-    actually observed: a false PASSED result on broken code, a false
-    FAILED result caused by the automation stalling, and a false FAILED
-    result caused by Kane not even completing a run at all (auth/config
-    errors). The first two get one confirmation run before being
-    trusted. The third is never trusted as a verdict — it's retried
-    until we get a real result or run out of attempts.
-    Returns (passed, output_of_last_run).
+    Run the Kane flow and only trust genuine, valid results, never an
+    automation stall or a run that failed to execute at all. Those two
+    outcomes carry no real evidence about the app, so they are always
+    discarded and re-tried, rather than being weighed as a "vote"
+    against a real result. A genuine PASSED result still gets one
+    confirmation run before being trusted, since that direction has
+    shown false positives before. A genuine, non-stall FAILED result
+    (a real assertion failure) is trusted immediately.
+    Returns (passed, output_of_last_valid_run).
     """
+    last_output = ""
+
     for attempt in range(1, max_attempts + 1):
         passed, output = run_kane_flow()
+        last_output = output
 
         if not has_valid_run(output):
             print(
-                f"    (attempt {attempt}: Kane didn't complete a real run "
-                f"— likely an auth/config error, not a test result. Retrying...)"
+                f"    (attempt {attempt}: Kane didn't complete a real run, "
+                f"likely an auth/config error, not a test result. Retrying...)"
             )
             continue
 
-        needs_confirmation = passed or is_automation_stall(output)
-        if not needs_confirmation:
+        if is_automation_stall(output):
+            print(
+                f"    (attempt {attempt}: automation stall, not real "
+                f"evidence. Discarding and trying again...)"
+            )
+            continue
+
+        if not passed:
+            # A genuine, non-stall FAILED result: a real assertion
+            # actually failed. This has been reliable every time it's
+            # been observed, so trust it immediately.
             return passed, output
 
-        reason = "PASSED" if passed else "an automation stall, not a real failure"
-        print(f"    (first check was {reason} — confirming with a second run...)")
+        # A genuine PASSED result: confirm with one more clean run,
+        # since this is the direction that's shown false positives.
+        print("    (genuine PASSED result. Confirming with a second run...)")
         passed_confirm, output_confirm = run_kane_flow()
 
-        if not has_valid_run(output_confirm):
+        if not has_valid_run(output_confirm) or is_automation_stall(output_confirm):
             print(
-                "    (confirmation run also failed to execute — retrying from scratch...)"
+                "    (confirmation run wasn't valid evidence either. "
+                "Retrying from scratch...)"
             )
             continue
 
-        if passed_confirm != passed:
-            print("    (second run disagreed — treating as FAILED to be safe)")
-            return False, output_confirm
-
+        if not passed_confirm:
+            print(
+                "    (confirmation run genuinely failed. Treating as "
+                "FAILED to be safe.)"
+            )
         return passed_confirm, output_confirm
 
     print(
-        f"    WARNING: Kane failed to complete a real run after "
+        f"    WARNING: could not get a trustworthy result after "
         f"{max_attempts} attempts. Treating as FAILED, but this result "
-        f"cannot be trusted — check your Kane CLI login/config."
+        f"cannot be fully trusted."
     )
-    return False, output
+    return False, last_output
 
 
 def test_commit(commit_hash):
     """Check out one commit, start the app, run Kane, then clean up."""
     checkout_commit(commit_hash)
 
-    # Confirm which commit is actually checked out right now — this is
+    # Confirm which commit is actually checked out right now. This is
     # the ground truth, in case the requested checkout didn't fully apply.
     _, actual_commit = run_command("git rev-parse HEAD")
     print(f"  (actually on commit: {actual_commit.strip()})")
@@ -265,7 +281,7 @@ def test_commit(commit_hash):
     passed, output = run_kane_flow_reliable()
     stop_app()
 
-    # Always show Kane's raw output, not just on failure — a "PASSED"
+    # Always show Kane's raw output, not just on failure. A "PASSED"
     # result deserves the same scrutiny as a "FAILED" one, especially
     # while we're checking whether the verdict can be trusted.
     print(f"  Kane's raw output ({'PASSED' if passed else 'FAILED'}):")
@@ -288,7 +304,7 @@ def get_current_branch():
 
 def get_current_ref():
     """
-    Get whatever identifies where we are right now — a branch name if
+    Get whatever identifies where we are right now: a branch name if
     we're on one, or the exact commit hash if we're in detached HEAD.
     Either way, this is always safe to check out later to get back here.
     """
@@ -304,7 +320,7 @@ def bisect(good_commit, bad_commit):
 
     commits = list_commits(good_commit, bad_commit)
     if not commits:
-        print("No commits between good and bad — check your commit hashes.")
+        print("No commits between good and bad. Check your commit hashes.")
         return None
 
     low, high = 0, len(commits) - 1
@@ -324,7 +340,7 @@ def bisect(good_commit, bad_commit):
     culprit = commits[low]
     print(f"\nFound the breaking commit: {culprit}")
 
-    # Always return to exactly where we started — whether that was a
+    # Always return to exactly where we started, whether that was a
     # branch or a specific commit checked out directly. Checking out
     # individual commits above leaves git pointed at whichever one was
     # tested last otherwise, which is not where the user expects to be.
@@ -373,7 +389,7 @@ Here is the full current content of app.py, which contains the bug:
 
 {broken_file_content}
 
-Fix the bug. Return ONLY the complete corrected content of app.py —
+Fix the bug. Return ONLY the complete corrected content of app.py,
 no explanation, no markdown code fences, no commentary. Just the raw
 Python file content, ready to be written directly to disk."""
 
@@ -517,7 +533,7 @@ def check():
     fix_worked = apply_and_verify_fix(fixed_content)
 
     if fix_worked:
-        print("\nThe fix works — Kane now passes.")
+        print("\nThe fix works. Kane now passes.")
         new_commit_hash = get_current_commit()
         run_command("git add app.py")
         run_command('git commit -m "Auto-fix: resolve regression found by kane-bisect"')
@@ -527,7 +543,7 @@ def check():
     else:
         print(
             "\nThe proposed fix did NOT pass Kane's check. Manual review "
-            "needed — the broken code is currently sitting in app.py, "
+            "needed. The broken code is currently sitting in app.py, "
             "uncommitted, for you to inspect."
         )
 
@@ -536,7 +552,7 @@ def main():
     if len(sys.argv) == 2 and sys.argv[1] == "check":
         check()
     elif len(sys.argv) == 3:
-        # Manual mode — still useful for demos or re-testing a known range.
+        # Manual mode, still useful for demos or re-testing a known range.
         good_commit, bad_commit = sys.argv[1], sys.argv[2]
         culprit = bisect(good_commit, bad_commit)
         if culprit:
