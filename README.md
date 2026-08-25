@@ -184,8 +184,13 @@ safer default.
 
 Screenshots of a real run, from `screenshots/`:
 
+## Bug detected
 ![Bug detected and bisected](screenshots/01-bisect-found-commit.png)
+
+## Fix proposed and applied
 ![Fix proposed and applied](screenshots/02-fix-applied.png)
+
+## Kane confirms the fix passes
 ![Kane confirms the fix passes](screenshots/03-kane-passed.png)
 
 Kane's own recorded test run for the fixed commit, viewable directly on
