@@ -2,11 +2,33 @@
 
 **kane-bisect** watches your repo, catches regressions with real browser
 tests, finds the exact commit that caused them, and fixes them
-automatically without needing to remember or type a commit hash.
+automatically. You never need to remember or type a commit hash.
 
 This folder contains a small Flask demo app (one feature: search a list
 of books) used as the test subject, plus `kane_bissect.py`, the tool
 itself.
+
+## Why this goes beyond a basic auto-bisect
+
+The hackathon brief itself suggests "auto-bisect that walks back through
+commits to find the one that broke Kane" as one example idea. This
+project starts from that idea but goes further in three ways:
+
+1. **It closes the loop, not just finds the commit.** Once the breaking
+   commit is found, the tool asks Claude to propose a fix based on that
+   commit's diff and Kane's failure output, applies the fix, re-verifies
+   it with Kane, and only commits it once that verification passes. The
+   commit is found automatically, and the fix is proposed, applied, and
+   proven to work automatically too.
+2. **It's self-tracking, not hash-driven.** The tool remembers its own
+   baseline and decides on its own when a regression has occurred. The
+   only manual step is making a commit and running `check`.
+3. **It treats Kane's live verdicts as something to verify, not just
+   consume.** Building this surfaced real, repeatable cases where Kane's
+   browser check disagreed with itself on identical, unchanged code.
+   Section 5 below documents exactly what was found and how the tool
+   was made resilient to it, rather than treating a single Kane run as
+   ground truth.
 
 ## 1. Set up
 
@@ -120,7 +142,7 @@ real result at all). `kane_bissect.py` handles this in a few ways:
   delay is enough. A stale leftover server was an early, hard-to-spot
   source of false results during development.
 
-This is a deliberate design choice, not a workaround being hidden. A
+This is a deliberate design choice rather than a workaround being hidden. A
 single flaky check is a poor foundation for an automated pipeline, so
 the tool treats agreement across runs as the real signal of truth.
 
