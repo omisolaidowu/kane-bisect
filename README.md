@@ -1,5 +1,7 @@
 ![kane-bisect-thumbnail](images/thumbnails/kane-bisect-thumbnail.png)
 
+**Demo Video Link**: https://youtu.be/wnUw0OsFQSE
+
 # kane-bisect - Book Search Demo App
 
 **kane-bisect** watches your repo, catches regressions with real browser
@@ -9,6 +11,8 @@ automatically. You never need to remember or type a commit hash.
 This folder contains a small Flask demo app (one feature: search a list
 of books) used as the test subject, plus `kane_bissect.py`, the tool
 itself.
+
+
 
 ## Why this goes beyond a basic auto-bisect
 
