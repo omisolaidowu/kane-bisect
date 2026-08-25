@@ -89,27 +89,32 @@ The tool remembers its baseline in `.kane_bissect_state.txt`, which is
 git-ignored since it's the tool's own memory, not part of the project.
 
 ## 4. Reproducing the demo from scratch
-
-To rebuild the exact commit chain used for testing/demoing this tool:
-
+ 
+This works directly on `main`, no separate branch needed.
+ 
+**1. Add a few small commits, so there's real history to bisect through:**
 ```bash
-git checkout -b bisect-demo
-# ... make your "good" baseline commit here ...
-
 echo # helper comment >> app.py
 git add app.py
 git commit -m "Add helper comment"
-
+ 
 echo # another note >> app.py
 git add app.py
 git commit -m "Add another note"
-
+ 
 echo # one more tweak >> app.py
 git add app.py
 git commit -m "Add one more tweak"
 ```
-
-Then plant the bug. Open `app.py` and change:
+ 
+**2. Run the tool to set this as the known-good baseline:**
+```bash
+python kane_bissect.py check
+```
+This tests the current commit, confirms it passes, and saves it as the
+baseline to compare future commits against.
+ 
+**3. Introduce a regression.** Open `app.py` and change:
 ```python
 results = [book for book in BOOKS if query.lower() in book.lower()]
 ```
@@ -117,14 +122,22 @@ to:
 ```python
 results = [book for book in BOOKS if query == book]
 ```
+ 
+**4. Commit the regression:**
 ```bash
 git add app.py
 git commit -m "Simplify search matching"
 ```
-
-Then run `python kane_bissect.py check` on the good commit first to
-save it as the baseline, then on this branch's tip. It should detect,
-bisect, fix, and verify automatically.
+ 
+**5. Run the tool again to trigger the full loop:**
+```bash
+python kane_bissect.py check
+```
+This is where Kane detects the failure, the tool bisects through the
+commits made in step 1 to find the exact one that introduced the bug,
+hands that commit's diff and Kane's failure output to the coding
+agent for a fix, applies the fix, and re-verifies with Kane that the
+fix actually works before committing it.
 
 ## 5. Reliability notes
 
@@ -156,7 +169,7 @@ this project. Generalizing this, by auto-detecting the start command
 from `package.json` or `requirements.txt`, and taking the test
 objective as a config file or CLI flag, is the natural next step to
 make this work on any repo, not just this one.
-
+ 
 **Tests locally, not against a live deployment.** When bisecting, the
 tool checks out each historical commit and spins up a local server to
 test it. It does not re-deploy each commit to a real staging or
@@ -166,14 +179,14 @@ shows up in production, you reproduce it locally at your current
 that caused it. True bisecting against production would require a way
 to deploy or preview each historical commit, which is a meaningfully
 larger project.
-
+ 
 **Assumes a bug stays broken once introduced,** the same assumption
 regular `git bisect` makes. If a bug is introduced in one commit, then
 incidentally masked (without being genuinely fixed) by a later commit,
 and reappears afterward, the binary search's halving logic can point
 to the wrong commit. Worth being aware of on any repo with a more
 tangled commit history than this demo's straight line.
-
+ 
 **The auto-fix step trusts a single AI-generated patch.** It re-tests
 with Kane before committing, so a fix that doesn't work is caught and
 never silently accepted. It does not try multiple candidate fixes, and
@@ -181,6 +194,17 @@ it does not ask for human review before committing a passing one. For
 a higher-stakes codebase, a mode that proposes a fix without
 auto-committing it, or a required human approval step, would be a
 safer default.
+ 
+**Reliability costs speed.** Every genuine PASSED result gets a second
+confirmation run before being trusted, and automation stalls or invalid
+runs are discarded and retried rather than counted as evidence. This
+roughly doubles (sometimes triples) the number of Kane calls per commit
+compared to trusting a single run, so a full bisect across several
+commits takes noticeably longer than the naive version would. This is
+a deliberate trade, correctness over speed, but it's a real cost worth
+naming. A tunable option to run in a faster, single-check mode (with a
+warning that results are less trustworthy) would be a reasonable
+addition for cases where speed matters more than certainty.
 
 ## 7. Evidence
 
