@@ -2,10 +2,6 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# demo filler
-
-# another demo filler
-
 
 @app.after_request
 def add_no_cache_headers(response):
