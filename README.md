@@ -1,4 +1,4 @@
-![kane-bisect-thumbnail](images/thumbnails/kane-bisect-thumbnail.png)
+![kane-bisect-thumbnail](thumbnails/kane-bisect-thumbnail.png)
 
 # kane-bisect - Book Search Demo App
 
@@ -187,13 +187,13 @@ safer default.
 Screenshots of a real run, from `images/screenshots/`:
 
 ## Bug detected
-![Bug detected and bisected](images/screenshots/01-bisect-found-commit.png)
+![Bug detected and bisected](screenshots/01-bisect-found-commit.png)
 
 ## Fix proposed and applied
-![Fix proposed and applied](images/screenshots/02-fix-applied.png)
+![Fix proposed and applied](screenshots/02-fix-applied.png)
 
 ## Kane confirms the fix passes
-![Kane confirms the fix passes](images/screenshots/03-kane-passed.png)
+![Kane confirms the fix passes](screenshots/03-kane-passed.png)
 
 Kane's own recorded test run for the fixed commit, viewable directly on
 the TestMu test manager: [test confirmation](https://test-manager.lambdatest.com/projects/01M0T534WGYTDJ7HEV2CRW3H5X/test-cases/01M0X3DY0SESCG35NJE1YSS7KJ/dashboard/share/US_YE7VVE399LEC1NSG8LE5LMKH72EPWFXF6Q272OJ1Q70EIQ3E136O08IM5AWEQ5KI?type=summary&agentView=true&fqdn=summary-page)
